@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VPM — Frontend</title>
+
+  <!-- Simple, colorful theme -->
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --muted:#9aa4b2;
+      --accent:#6dd3ff;
+      --accent-2:#7b61ff;
+      --glass: rgba(255,255,255,0.05);
+      --radius:14px;
+      --gap:18px;
+    }
+
+    /* Reset and base */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg, #071029 0%, #07182a 55%, #07172a 100%);
+      color: #e6eef8;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:28px;
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      margin-bottom:24px;
+    }
+    .logo {
+      width:64px;height:64px;border-radius:12px;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;color:#021028;font-size:20px;box-shadow:0 6px 20px rgba(123,97,255,0.14)
+    }
+    h1{font-size:28px;margin:0}
+    p.lead{color:var(--muted);margin:6px 0 0 0}
+
+    main{
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:28px;
+      align-items:start;
+      margin-top:18px;
+    }
+
+    /* Left sidebar: controls */
+    .panel{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:var(--radius); padding:18px; box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+    }
+    .panel h3{margin:0 0 12px 0}
+    .file-row{display:flex;gap:12px;align-items:center}
+    .file-row input[type=file]{flex:1}
+    .btn{
+      display:inline-block;padding:10px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));
+      color:#021028;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(109,211,255,0.12)
+    }
+    .small{font-size:13px;color:var(--muted)}
+    .muted{color:var(--muted);font-size:13px;margin-top:8px}
+
+    /* Filters */
+    .filters{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+    .chip{background:var(--glass);padding:6px 10px;border-radius:999px;font-size:13px;color:var(--muted);cursor:pointer;border:1px solid rgba(255,255,255,0.02)}
+    .chip.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#021028;border:none}
+
+    /* Right: results */
+    .results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fill,minmax(180px,1fr));
+      gap:16px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03);
+      box-shadow: 0 6px 18px rgba(2,6,23,0.5); transition: transform .14s ease, box-shadow .14s ease;
+    }
+    .card:hover{transform:translateY(-6px);box-shadow:0 18px 30px rgba(2,6,23,0.6)}
+    .thumb{width:100%;height:120px;border-radius:8px;background:#07192b;display:block;object-fit:cover;margin-bottom:8px}
+    .title{font-weight:600;margin:0 0 6px 0}
+    .meta{color:var(--muted);font-size:13px;margin:0;display:flex;justify-content:space-between}
+
+    /* Empty */
+    .empty{padding:48px;border-radius:12px;text-align:center;background:rgba(255,255,255,0.02);color:var(--muted)}
+
+    /* Responsive: stack on small screens */
+    @media (max-width:880px){
+      main{grid-template-columns: 1fr; padding-bottom:40px}
+      .logo{width:52px;height:52px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">VPM</div>
+    <div>
+      <h1>Visual Product Matcher</h1>
+      <p class="lead">Upload an image and find visually similar products</p>
+    </div>
+  </header>
+
+  <main>
+    <!-- Controls -->
+    <aside class="panel" aria-label="Controls">
+      <h3>Image search</h3>
+      <div class="file-row">
+        <input id="imageInput" type="file" accept="image/*">
+        <button id="searchBtn" class="btn">Search</button>
+      </div>
+      <p class="muted">Tip: try product photos with a plain background for best results.</p>
+
+      <h3 style="margin-top:18px">Filters</h3>
+      <div class="filters" id="filters">
+        <div class="chip" data-cat="all">All</div>
+        <div class="chip" data-cat="shoes">Shoes</div>
+        <div class="chip" data-cat="bags">Bags</div>
+        <div class="chip" data-cat="clothing">Clothing</div>
+        <div class="chip" data-cat="accessory">Accessory</div>
+      </div>
+
+      <div style="margin-top:18px">
+        <h3>Status</h3>
+        <div id="status" class="small muted">Idle</div>
+      </div>
+
+      <div style="margin-top:12px" class="muted">Backend: <span id="backendStatus">unknown</span></div>
+    </aside>
+
+    <!-- Results -->
+    <section>
+      <div class="results-header">
+        <h2 style="margin:0">Products</h2>
+        <div class="small muted" id="count">—</div>
+      </div>
+
+      <div id="resultsArea">
+        <div class="empty" id="empty">Loading products…</div>
+        <div class="grid" id="grid" style="display:none"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:5000"; // change if your backend uses a different address
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('empty');
+    const status = document.getElementById('status');
+    const backendStatus = document.getElementById('backendStatus');
+    const countEl = document.getElementById('count');
+    const filters = document.getElementById('filters');
+
+    // set up filter chip behaviour
+    filters.addEventListener('click', e => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      // filter the grid (simple client-side filter)
+      const cat = chip.dataset.cat;
+      Array.from(grid.children).forEach(card => {
+        if (!cat || cat === 'all') card.style.display = '';
+        else card.style.display = (card.dataset.cat === cat) ? '' : 'none';
+      });
+    });
+
+    async function setBackendStatus() {
+      try {
+        const r = await fetch(API_BASE + '/products', { method: 'HEAD' });
+        backendStatus.textContent = r.ok ? 'up' : 'error';
+      } catch (e) {
+        backendStatus.textContent = 'down';
+      }
+    }
+
+    function showStatus(t) {
+      status.textContent = t;
+    }
+
+    function makeCard(p) {
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.dataset.cat = (p.category || '').toLowerCase();
+      const img = document.createElement('img');
+      img.className = 'thumb';
+      img.alt = p.name || 'product';
+      img.src = p.image || 'data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjEwMCIgd2lkdGg9IjEwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2JiYjE0NiIvPjwvc3ZnPg=='; // placeholder
+      el.appendChild(img);
+      const title = document.createElement('div'); title.className = 'title'; title.textContent = p.name || 'Untitled';
+      el.appendChild(title);
+      const meta = document.createElement('p'); meta.className = 'meta'; meta.innerHTML = `<span>${p.category||'—'}</span><span>${p.price ? '₹'+p.price : ''}</span>`;
+      el.appendChild(meta);
+      return el;
+    }
+
+    async function loadProducts() {
+      showStatus('Loading products…');
+      countEl.textContent = '—';
+      try {
+        const r = await fetch(API_BASE + '/products');
+        if (!r.ok) throw new Error('HTTP '+r.status);
+        const data = await r.json();
+        grid.innerHTML = '';
+        if (!Array.isArray(data) || data.length === 0) {
+          empty.textContent = 'No products found.'
+          empty.style.display = '';
+          grid.style.display = 'none';
+        } else {
+          empty.style.display = 'none';
+          grid.style.display = '';
+          for (const p of data) {
+            grid.appendChild(makeCard(p));
+          }
+        }
+        countEl.textContent = (data && data.length) ? (data.length + ' results') : '0';
+        showStatus('Products loaded');
+      } catch (err) {
+        empty.style.display = '';
+        empty.textContent = 'Failed to load products: ' + err.message;
+        grid.style.display = 'none';
+        showStatus('Error');
+        console.error(err);
+      }
+      setBackendStatus();
+    }
+
+    // wire up search button (this is a minimal stub — adapt to your API)
+    document.getElementById('searchBtn').addEventListener('click', async () => {
+      const f = document.getElementById('imageInput').files[0];
+      if (!f) { alert('Choose an image first'); return; }
+      showStatus('Uploading image...');
+      try {
+        const fd = new FormData(); fd.append('image', f);
+        const r = await fetch(API_BASE + '/search', { method: 'POST', body: fd });
+        if (!r.ok) throw new Error('HTTP '+r.status);
+        const results = await r.json();
+        // for demo: replace results
+        grid.innerHTML = '';
+        if (Array.isArray(results) && results.length) {
+          empty.style.display = 'none'; grid.style.display = '';
+          for (const p of results) grid.appendChild(makeCard(p));
+          countEl.textContent = results.length + ' results';
+        } else {
+          empty.style.display = ''; empty.textContent = 'No matching products';
+          grid.style.display = 'none';
+        }
+        showStatus('Search complete');
+      } catch (err) {
+        showStatus('Search failed');
+        alert('Search failed: ' + err.message);
+        console.error(err);
+      }
+    });
+
+    // initial load
+    loadProducts();
+  </script>
+</body>
+</html>

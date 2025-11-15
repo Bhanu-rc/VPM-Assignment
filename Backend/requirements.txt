@@ -1,0 +1,10 @@
+flask
+flask-cors
+torch
+torchvision
+faiss-cpu
+Pillow
+requests
+tqdm
+numpy
+gunicorn
